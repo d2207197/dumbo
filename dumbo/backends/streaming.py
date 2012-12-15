@@ -24,10 +24,10 @@ from dumbo.util import (configopts, envdef, execute, findhadoop, findjar,
 
 
 class StreamingBackend(Backend):
-    
+
     def matches(self, opts):
         return bool(opts['hadoop'])
-        
+
     def create_iteration(self, opts):
         return StreamingIteration(opts.pop('prog')[0], opts)
 
@@ -77,7 +77,7 @@ class StreamingIteration(Iteration):
         if modpath.endswith('.egg'):
             addedopts.add('libegg', modpath)
         else:
-            opts.add('file', modpath)
+            opts.add('file', 'file://' + modpath)
         opts.add('jobconf', 'stream.map.input=typedbytes')
         opts.add('jobconf', 'stream.reduce.input=typedbytes')
 
@@ -204,11 +204,11 @@ class StreamingIteration(Iteration):
         return retval
 
 class StreamingFileSystem(FileSystem):
-    
+
     def __init__(self, hadoop):
         self.hadoop = hadoop
         self.hdfs = hadoop + '/bin/hadoop fs'
-    
+
     def cat(self, path, opts):
         streamingjar = findjar(self.hadoop, 'streaming',
                                opts['hadooplib'] if 'hadooplib' in opts else None)
@@ -237,23 +237,23 @@ class StreamingFileSystem(FileSystem):
         except IOError:
             pass  # ignore
         return 0
-    
+
     def ls(self, path, opts):
         return execute("%s -ls '%s'" % (self.hdfs, path),
                        printcmd=False)
-    
+
     def exists(self, path, opts):
         shellcmd = "%s -stat '%s' >/dev/null 2>&1"
         return 1 - int(execute(shellcmd % (self.hdfs, path), printcmd=False) == 0)
-    
+
     def rm(self, path, opts):
         return execute("%s -rmr '%s'" % (self.hdfs, path),
                        printcmd=False)
-    
+
     def put(self, path1, path2, opts):
         return execute("%s -put '%s' '%s'" % (self.hdfs, path1,
                        path2), printcmd=False)
-    
+
     def get(self, path1, path2, opts):
         return execute("%s -get '%s' '%s'" % (self.hdfs, path1,
                        path2), printcmd=False)
